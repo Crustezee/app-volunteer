@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\CertificateStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\OrganizerCertificateIndexRequest;
+use App\Http\Requests\ReplaceCertificateRequest;
 use App\Http\Requests\RevokeCertificateRequest;
 use App\Http\Requests\StoreCertificateRequest;
 use App\Http\Resources\CertificateCollection;
@@ -114,6 +116,40 @@ class OrganizerCertificateController extends Controller
         return new CertificateResource(
             $revoker->revoke($certificate, $request->validated('reason'), $request->user())
         );
+    }
+
+    public function replacement(
+        ReplaceCertificateRequest $request,
+        Organizer $organizer,
+        Certificate $certificate,
+        CertificateRevoker $revoker,
+        CertificateIssuer $issuer
+    ): CertificateResource {
+        $this->ensureCertificateBelongsToOrganizer($certificate, $organizer);
+
+        $certificate->load('application');
+        $reason = $request->validated('reason')
+            ?? 'Sertifikat diganti dengan revisi baru.';
+
+        if ($certificate->status === CertificateStatus::Issued) {
+            $certificate = $revoker->revoke($certificate, $reason, $request->user());
+        }
+
+        $replacement = $issuer->issue($certificate->application, [
+            'hours' => $certificate->hours,
+            'issuedAt' => now()->toDateString(),
+            'supersedesCertificateId' => $certificate->id,
+        ], $request->user());
+
+        $replacement->load([
+            'application.event.category',
+            'application.event.organizer',
+            'application.volunteerProfile',
+            'supersedes',
+            'supersededBy',
+        ]);
+
+        return new CertificateResource($replacement);
     }
 
     private function ensureCertificateBelongsToOrganizer(

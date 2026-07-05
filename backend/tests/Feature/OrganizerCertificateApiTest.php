@@ -154,6 +154,46 @@ class OrganizerCertificateApiTest extends TestCase
         $this->assertDatabaseCount('notifications', 3);
     }
 
+    public function test_certificate_replacement_endpoint_revokes_and_issues_new_revision(): void
+    {
+        $this->completedApplication();
+        $owner = $this->owner();
+        $this->actingAs($owner);
+
+        $issued = $this->postJson('/api/organizers/org-aksara-muda/applications/app-004/certificate', [
+            'hours' => 4,
+        ])->assertCreated();
+        $oldId = $issued->json('data.id');
+        $oldCredential = $issued->json('data.credentialId');
+
+        $replacement = $this->postJson("/api/organizers/org-aksara-muda/certificates/{$oldId}/replacement", [
+            'reason' => 'Nama relawan perlu koreksi.',
+        ])->assertCreated()
+            ->assertJsonPath('data.revisionNumber', 2)
+            ->assertJsonPath('data.supersedesCertificateId', $oldId)
+            ->assertJsonPath('data.status', 'Issued');
+
+        $newCredential = $replacement->json('data.credentialId');
+
+        $this->assertNotSame($oldCredential, $newCredential);
+        $this->assertDatabaseHas('certificates', [
+            'id' => $oldId,
+            'status' => 'Revoked',
+            'revocation_reason' => 'Nama relawan perlu koreksi.',
+        ]);
+        $this->assertDatabaseHas('certificates', [
+            'credential_id' => $newCredential,
+            'status' => 'Issued',
+            'supersedes_certificate_id' => $oldId,
+            'revision_number' => 2,
+        ]);
+
+        $this->getJson("/api/certificates/verify/{$oldCredential}")
+            ->assertOk()
+            ->assertJsonPath('data.isValid', false)
+            ->assertJsonPath('data.replacementCredentialId', $newCredential);
+    }
+
     public function test_invalid_public_credential_and_cross_organizer_certificate_are_hidden(): void
     {
         $this->getJson('/api/certificates/verify/DOES-NOT-EXIST')->assertNotFound();

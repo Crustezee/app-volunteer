@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\ApplicationStatus;
+use App\Enums\CertificateStatus;
 use App\Models\Concerns\HasAuditColumns;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -18,9 +19,9 @@ class VolunteerApplication extends Model
 
     protected $keyType = 'string';
 
-    protected $fillable = ['id', 'event_id', 'volunteer_profile_id', 'role', 'status', 'submitted_at', 'motivation', 'availability'];
+    protected $fillable = ['id', 'event_id', 'volunteer_profile_id', 'role', 'status', 'submitted_at', 'motivation', 'availability', 'checked_in_at', 'checked_in_by'];
 
-    protected $casts = ['availability' => 'array', 'status' => ApplicationStatus::class];
+    protected $casts = ['availability' => 'array', 'status' => ApplicationStatus::class, 'checked_in_at' => 'datetime'];
 
     protected static function booted(): void
     {
@@ -50,7 +51,7 @@ class VolunteerApplication extends Model
     public function certificate(): HasOne
     {
         return $this->hasOne(Certificate::class, 'application_id')
-            ->where('status', AppnumsCertificateStatus::Issued->value);
+            ->where('status', CertificateStatus::Issued->value);
     }
 
     public function certificates(): HasMany

@@ -16,8 +16,10 @@ use App\Services\CurrentVolunteerProfile;
 use App\Services\EventViewerContext;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class VolunteerApplicationController extends Controller
 {
@@ -105,5 +107,57 @@ class VolunteerApplicationController extends Controller
         return (new VolunteerApplicationResource($application))
             ->response()
             ->setStatusCode(201);
+    }
+
+    public function cancel(
+        Request $request,
+        string $application,
+        CurrentVolunteerProfile $currentVolunteer,
+        EventViewerContext $viewerContext
+    ): VolunteerApplicationResource {
+        $profile = $currentVolunteer->resolve($request->user());
+
+        $application = DB::transaction(function () use ($application, $profile): VolunteerApplication {
+            $application = $profile->applications()
+                ->with('event')
+                ->lockForUpdate()
+                ->findOrFail($application);
+
+            if (! in_array($application->status, [
+                ApplicationStatus::Submitted,
+                ApplicationStatus::Waitlisted,
+                ApplicationStatus::Accepted,
+            ], true)) {
+                throw ValidationException::withMessages([
+                    'status' => ['Application hanya bisa dibatalkan dari status Submitted, Waitlisted, atau Accepted.'],
+                ]);
+            }
+
+            $application->update(['status' => ApplicationStatus::Cancelled]);
+
+            $event = VolunteerEvent::query()
+                ->lockForUpdate()
+                ->find($application->event_id);
+
+            if ($event && $event->registered > 0) {
+                $event->decrement('registered');
+                $event->refresh();
+
+                if ($event->status === EventStatus::Closed && $event->registered < $event->quota) {
+                    $event->update([
+                        'status' => $event->registered / $event->quota >= 0.9
+                            ? EventStatus::NearlyFull
+                            : EventStatus::Open,
+                    ]);
+                }
+            }
+
+            return $application;
+        });
+
+        $application->load(['event.category', 'event.organizer', 'volunteerProfile']);
+        $viewerContext->apply(new Collection([$application->event]), $profile);
+
+        return new VolunteerApplicationResource($application);
     }
 }

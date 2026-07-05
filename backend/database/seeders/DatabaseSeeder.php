@@ -19,12 +19,27 @@ class DatabaseSeeder extends Seeder
     {
         $volunteerUser = User::query()->updateOrCreate(
             ['email' => 'nadira@example.com'],
-            ['name' => 'Nadira Putri', 'password' => 'password', 'email_verified_at' => now()]
+            ['name' => 'Nadira Putri', 'password' => 'password', 'role' => 'volunteer', 'status' => 'Active', 'city' => 'Yogyakarta', 'avatar_initials' => 'NP', 'email_verified_at' => now()]
         );
 
         $organizerUser = User::query()->updateOrCreate(
             ['email' => 'owner@aksaramuda.test'],
-            ['name' => 'Dimas Aksara', 'password' => 'password', 'email_verified_at' => now()]
+            ['name' => 'Dimas Aksara', 'password' => 'password', 'role' => 'organizer', 'status' => 'Active', 'city' => 'Yogyakarta', 'avatar_initials' => 'DA', 'email_verified_at' => now()]
+        );
+
+        $frontendVolunteerUser = User::query()->updateOrCreate(
+            ['email' => 'nadira.putri@mail.com'],
+            ['name' => 'Nadira Putri', 'password' => 'prototype123', 'role' => 'volunteer', 'status' => 'Active', 'city' => 'Yogyakarta', 'avatar_initials' => 'NP', 'email_verified_at' => now()]
+        );
+
+        $frontendOrganizerUser = User::query()->updateOrCreate(
+            ['email' => 'bagus.setiawan@mail.com'],
+            ['name' => 'Bagus Setiawan', 'password' => 'prototype123', 'role' => 'organizer', 'status' => 'Active', 'city' => 'Yogyakarta', 'avatar_initials' => 'BS', 'email_verified_at' => now()]
+        );
+
+        User::query()->updateOrCreate(
+            ['email' => 'admin@migunani.id'],
+            ['name' => 'Admin Migunani', 'password' => 'prototype123', 'role' => 'admin', 'status' => 'Active', 'city' => 'Yogyakarta', 'avatar_initials' => 'AM', 'email_verified_at' => now()]
         );
 
         Category::query()->upsert([
@@ -55,6 +70,11 @@ class DatabaseSeeder extends Seeder
             ['id' => 'mem-aksara-owner', 'role' => 'Owner']
         );
 
+        OrganizerMember::query()->updateOrCreate(
+            ['organizer_id' => 'org-aksara-muda', 'user_id' => $frontendOrganizerUser->id],
+            ['id' => 'mem-aksara-bagus', 'role' => 'Owner']
+        );
+
         $events = [
             ['id' => 'evt-001', 'slug' => 'kelas-inspirasi-anak-kali-code', 'title' => 'Kelas Inspirasi Anak Kali Code', 'category_id' => 'education', 'organizer_id' => 'org-aksara-muda', 'location' => 'Rumah Belajar Code', 'city' => 'Yogyakarta', 'mode' => 'Offline', 'date' => '2026-06-06', 'start_time' => '08:00', 'end_time' => '12:00', 'duration_hours' => 4, 'quota' => 40, 'registered' => 27, 'status' => 'Open', 'image' => 'https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=1200&q=80', 'short_description' => 'Mengajar literasi dasar, numerasi, dan creative sharing untuk anak bantaran sungai.', 'description' => 'Program kelas akhir pekan untuk membantu anak-anak bantaran Kali Code belajar dengan cara yang ringan, aktif, dan menyenangkan.', 'benefits' => ['Sertifikat 4 jam', 'Mentoring kit', 'Relasi komunitas'], 'skills' => ['Public speaking', 'Mengajar anak', 'Empati'], 'roles' => ['Education Mentor', 'Content & Documentation'], 'impact_target' => '80 anak mendapat sesi belajar interaktif.', 'tags' => ['Sertifikat', 'Mahasiswa', 'Weekend'], 'featured' => true],
             ['id' => 'evt-002', 'slug' => 'bersih-sungai-gajah-wong', 'title' => 'Bersih Sungai Gajah Wong', 'category_id' => 'environment', 'organizer_id' => 'org-hijau-kota', 'location' => 'Taman Gajah Wong Edupark', 'city' => 'Sleman', 'mode' => 'Offline', 'date' => '2026-06-09', 'start_time' => '06:30', 'end_time' => '10:30', 'duration_hours' => 4, 'quota' => 80, 'registered' => 73, 'status' => 'Nearly Full', 'image' => 'https://images.unsplash.com/photo-1618477461853-cf6ed80faba5?auto=format&fit=crop&w=1200&q=80', 'short_description' => 'Aksi bersih sungai, audit sampah, dan edukasi pemilahan untuk warga sekitar.', 'description' => 'Relawan akan dibagi menjadi tim cleanup, dokumentasi, dan edukasi warga.', 'benefits' => ['Sertifikat 4 jam', 'Konsumsi', 'Volunteer starter pack'], 'skills' => ['Kerja tim', 'Dokumentasi', 'Komunikasi warga'], 'roles' => ['Field Volunteer', 'Content & Documentation', 'Logistics Crew'], 'impact_target' => '250 kg sampah terpilah dari area sungai.', 'tags' => ['Outdoor', 'Lingkungan', 'Konsumsi'], 'featured' => true],
@@ -71,6 +91,8 @@ class DatabaseSeeder extends Seeder
         }
 
         VolunteerProfile::query()->updateOrCreate(['id' => 'usr-nadira'], ['user_id' => $volunteerUser->id, 'name' => 'Nadira Putri', 'university' => 'Universitas Gadjah Mada', 'major' => 'Ilmu Komunikasi', 'city' => 'Yogyakarta', 'avatar_initials' => 'NP', 'interests' => ['Pendidikan', 'Lingkungan', 'Sosial']]);
+
+        VolunteerProfile::query()->updateOrCreate(['id' => 'usr-nadira-frontend'], ['user_id' => $frontendVolunteerUser->id, 'name' => 'Nadira Putri', 'university' => 'Universitas Gadjah Mada', 'major' => 'Ilmu Komunikasi', 'city' => 'Yogyakarta', 'avatar_initials' => 'NP', 'interests' => ['Pendidikan', 'Lingkungan', 'Sosial']]);
 
         foreach ([
             ['id' => 'app-001', 'event_id' => 'evt-001', 'volunteer_profile_id' => 'usr-nadira', 'role' => 'Education Mentor', 'status' => 'Accepted', 'submitted_at' => '2026-05-11', 'motivation' => 'Saya ingin membantu anak-anak belajar dengan metode yang ringan dan menyenangkan.', 'availability' => ['Sabtu pagi', 'Briefing online malam hari']],

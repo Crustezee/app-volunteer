@@ -12,6 +12,7 @@ use App\Models\Organizer;
 use App\Models\VolunteerApplication;
 use App\Services\ApplicationStatusTransition;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\Request;
 
 class OrganizerApplicationController extends Controller
 {
@@ -62,6 +63,30 @@ class OrganizerApplicationController extends Controller
         VolunteerApplication $application
     ): VolunteerApplicationResource {
         $this->authorize('viewDashboard', $organizer);
+        $application->load(['event.category', 'event.organizer', 'volunteerProfile', 'certificates.supersededBy']);
+
+        return new VolunteerApplicationResource($application);
+    }
+
+    public function checkIn(
+        Request $request,
+        Organizer $organizer,
+        VolunteerApplication $application
+    ): VolunteerApplicationResource {
+        $this->authorize('manage', $organizer);
+        abort_unless(
+            $application->event()->where('organizer_id', $organizer->id)->exists(),
+            404,
+            'Resource tidak ditemukan.'
+        );
+
+        if ($application->checked_in_at === null) {
+            $application->update([
+                'checked_in_at' => now(),
+                'checked_in_by' => $request->user()?->id,
+            ]);
+        }
+
         $application->load(['event.category', 'event.organizer', 'volunteerProfile', 'certificates.supersededBy']);
 
         return new VolunteerApplicationResource($application);

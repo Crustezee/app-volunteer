@@ -26,7 +26,7 @@ class LoginRequest extends FormRequest
         return [
             'email' => ['required', 'email', 'max:255'],
             'password' => ['required', 'string'],
-            'accountType' => ['required', 'string', 'in:volunteer,organizer'],
+            'accountType' => ['nullable', 'string', 'in:volunteer,organizer,admin'],
         ];
     }
 }

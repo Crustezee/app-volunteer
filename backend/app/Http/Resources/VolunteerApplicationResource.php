@@ -21,6 +21,8 @@ class VolunteerApplicationResource extends JsonResource
             'submittedAt' => $this->submitted_at,
             'motivation' => $this->motivation,
             'availability' => $this->availability,
+            'checkedInAt' => $this->checked_in_at?->toISOString(),
+            'checkedInBy' => $this->checked_in_by,
             'event' => new VolunteerEventResource($this->whenLoaded('event')),
             'volunteerProfile' => new VolunteerProfileResource($this->whenLoaded('volunteerProfile')),
             'certificates' => CertificateResource::collection($this->whenLoaded('certificates')),

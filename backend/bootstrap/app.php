@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -22,6 +23,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->trustProxies(at: '*');
         $middleware->statefulApi();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
@@ -75,6 +77,15 @@ return Application::configure(basePath: dirname(__DIR__))
                     ['message' => 'Terlalu banyak request. Coba kembali beberapa saat lagi.'],
                     Response::HTTP_TOO_MANY_REQUESTS,
                     $exception->getHeaders()
+                );
+            }
+        });
+
+        $exceptions->render(function (HttpException $exception, Request $request) {
+            if ($request->is('api/*')) {
+                return response()->json(
+                    ['message' => $exception->getMessage() ?: 'Permintaan tidak dapat diproses.'],
+                    $exception->getStatusCode()
                 );
             }
         });

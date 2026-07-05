@@ -31,6 +31,7 @@ class MeResource extends JsonResource
                             true
                         )
                     ),
+                'admin' => $this->role === 'admin',
             ],
         ];
     }

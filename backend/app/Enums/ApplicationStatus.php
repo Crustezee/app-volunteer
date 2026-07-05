@@ -10,5 +10,6 @@ enum ApplicationStatus: string
     case Waitlisted = 'Waitlisted';
     case Rejected = 'Rejected';
     case Withdrawn = 'Withdrawn';
+    case Cancelled = 'Cancelled';
     case Completed = 'Completed';
 }
