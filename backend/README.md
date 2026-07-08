@@ -64,7 +64,7 @@ prototype123
 Organizer :
 bagus.setiawan@mail.com
 prototype123
-Volun :
+Peserta :
 keyridho@gmail.com
 Key123456
 ```
