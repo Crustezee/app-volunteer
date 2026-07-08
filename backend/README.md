@@ -55,3 +55,16 @@ GET    /api/certificates
 GET    /api/dashboard/volunteer
 GET    /api/dashboard/organizer
 ```
+## Akun Demo
+
+```txt
+Super Admin :
+admin@migunani.id
+prototype123
+Organizer :
+bagus.setiawan@mail.com
+prototype123
+Volun :
+keyridho@gmail.com
+Key123456
+```
